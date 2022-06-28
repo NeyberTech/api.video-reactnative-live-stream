@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import LiveStreamIos
+import LiveStreamIos_NT
 import AVFoundation
 
 class ReactNativeLivestreamView : UIView {
