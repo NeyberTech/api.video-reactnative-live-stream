@@ -32,7 +32,7 @@ type ReactNativeLivestreamProps = {
     isStereo: boolean; // ios新增
   };
   zoomRatio: number; // ios新增
-  enablePinchedZoom: Boolean; // ios新增
+  enablePinchedZoom: boolean; // ios新增
   onConnectionSuccess: (event: any) => void;
   onConnectionFailed: (event: any) => void;
   onDisconnect: (event: any) => void;
