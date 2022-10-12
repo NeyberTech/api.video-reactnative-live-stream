@@ -47,6 +47,8 @@ export type ReactNativeLivestreamMethods = {
 // Native Props
 export type NativeLivestreamProps = {
   style: ViewStyle;
+  liveStreamKey: string;
+  rtmpServerUrl: string;
   onConnectionSuccess: (event: NativeSyntheticEvent<{}>) => void;
   onConnectionFailed: (event: NativeSyntheticEvent<{ code: string }>) => void;
   onDisconnect: (event: NativeSyntheticEvent<{}>) => void;
