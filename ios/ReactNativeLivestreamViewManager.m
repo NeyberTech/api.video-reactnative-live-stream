@@ -1,6 +1,6 @@
 #import "React/RCTViewManager.h"
 
-@interface RCT_EXTERN_MODULE(ReactNativeLiveStreamViewManager, RCTViewManager)
+@interface RCT_EXTERN_MODULE(ReactNativeLivestreamViewManager, RCTViewManager)
 
 RCT_EXPORT_VIEW_PROPERTY(audio, NSDictionary)
 RCT_EXPORT_VIEW_PROPERTY(video, NSDictionary)

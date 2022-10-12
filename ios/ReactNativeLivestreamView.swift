@@ -1,5 +1,5 @@
 //
-//  ReactNativeLiveStreamView.swift
+//  ReactNativeLivestreamView.swift
 //  api.video-reactnative-live-stream
 //
 
@@ -51,7 +51,7 @@ extension AVCaptureDevice.Position {
     }
 }
 
-class ReactNativeLiveStreamView: UIView {
+class ReactNativeLivestreamView: UIView {
     private var liveStream: ApiVideoLiveStream!
     private var isStreaming: Bool = false
 

@@ -2,21 +2,21 @@ import ApiVideoLiveStream
 import CoreGraphics
 import Foundation
 
-@objc(ReactNativeLiveStreamViewManager)
-class ReactNativeLiveStreamViewManager: RCTViewManager {
+@objc(ReactNativeLivestreamViewManager)
+class ReactNativeLivestreamViewManager: RCTViewManager {
     override static func requiresMainQueueSetup() -> Bool {
         return true
     }
 
-    override func view() -> (ReactNativeLiveStreamView) {
-        return ReactNativeLiveStreamView()
+    override func view() -> (ReactNativeLivestreamView) {
+        return ReactNativeLivestreamView()
     }
 
     @objc func startStreamingFromManager(_ node: NSNumber, withRequestId requestId: NSNumber, withStreamKey streamKey: String, withUrl url: String?) {
         DispatchQueue.main.async {
             let component = self.bridge.uiManager.view(
                 forReactTag: node
-            ) as! ReactNativeLiveStreamView
+            ) as! ReactNativeLivestreamView
             component.startStreaming(requestId: Int(truncating: requestId), streamKey: streamKey, url: url)
         }
     }
@@ -25,7 +25,7 @@ class ReactNativeLiveStreamViewManager: RCTViewManager {
         DispatchQueue.main.async {
             let component = self.bridge.uiManager.view(
                 forReactTag: node
-            ) as! ReactNativeLiveStreamView
+            ) as! ReactNativeLivestreamView
             component.stopStreaming()
         }
     }
@@ -34,7 +34,7 @@ class ReactNativeLiveStreamViewManager: RCTViewManager {
         DispatchQueue.main.async {
             let component = self.bridge.uiManager.view(
                 forReactTag: node
-            ) as! ReactNativeLiveStreamView
+            ) as! ReactNativeLivestreamView
             component.setZoomRatio(zoomRatio: CGFloat(zoomRatio))
         }
     }
