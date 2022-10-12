@@ -13,20 +13,20 @@ export type Orientation = 'landscape' | 'portrait';
 
 // RN props
 export type ReactNativeLivestreamProps = {
-  style?: ViewStyle;
+  style: ViewStyle;
   liveStreamKey: string;
   rtmpServerUrl: string;
-  camera: 'front' | 'back';
+  camera: Camera;
   video: {
     fps: number;
-    resolution: '240p' | '360p' | '480p' | '720p' | '1080p' | '2160p';
+    resolution: Resolution;
     bitrate: number;
-    orientation: 'landscape' | 'portrait'; // 废弃
+    orientation: Orientation; // 废弃
   };
   isMuted: boolean;
   audio: {
     bitrate: number;
-    sampleRate: 8000 | 16000 | 32000 | 44100 | 48000; // ios新增
+    sampleRate: SampleRate; // ios新增
     isStereo: boolean; // ios新增
   };
   zoomRatio: number; // ios新增
