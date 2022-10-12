@@ -1,7 +1,5 @@
 import {
-  NativeSyntheticEvent,
   requireNativeComponent,
-  ViewStyle,
 } from 'react-native';
 
 import type { NativeLivestreamProps } from './types'

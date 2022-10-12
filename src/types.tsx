@@ -54,7 +54,7 @@ export type NativeLivestreamProps = {
   // android 0.2.1
   videoFps: number;
   videoResolution: Resolution;
-  videoBitrate: SampleRate;
+  videoBitrate: number;
   videoCamera: Camera;
   videoOrientation: Orientation
   audioMuted: boolean;
