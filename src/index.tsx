@@ -7,47 +7,102 @@ import {
   NativeSyntheticEvent,
 } from 'react-native';
 
+// RN methods
+type ReactNativeLivestreamMethods = {
+  startStreaming: () => void;
+  stopStreaming: () => void;
+  setZoomRatio: (zoomRatio: number) => void; // ios新增
+};
+// RN props
 type ReactNativeLivestreamProps = {
-  style: ViewStyle;
-  liveStreamKey: string;
+  style?: ViewStyle;
+  liveStreamKey?: string;
   rtmpServerUrl?: string;
+  camera?: 'front' | 'back';
+  video?: {
+    fps?: number;
+    resolution?: '240p' | '360p' | '480p' | '720p' | '1080p' | '2160p';
+    bitrate?: number;
+    orientation?: 'landscape' | 'portrait'; // 废弃
+  };
+  isMuted?: boolean;
+  audio?: {
+    bitrate?: number;
+    sampleRate?: 8000 | 16000 | 32000 | 44100 | 48000; // ios新增
+    isStereo?: boolean; // ios新增
+  };
+  zoomRatio?: number; // ios新增
+  enablePinchedZoom?: Boolean; // ios新增
+  onConnectionSuccess?: (event: any) => void;
+  onConnectionFailed?: (event: any) => void;
+  onDisconnect?: (event: any) => void;
+  onStartStreaming?: (event: any) => void;
+};
+
+// RN default props
+const LIVE_STREAM_PROPS_DEFAULTS: ReactNativeLivestreamProps = {
+  style: {},
+  liveStreamKey: "",
+  rtmpServerUrl: "",
+  camera: "front",
+  video: {
+    fps: 30,
+    resolution: '720p',
+    bitrate: 2000000,
+    orientation: "portrait"
+  },
+  isMuted: false,
+  audio: {
+    bitrate: 128000,
+    sampleRate: 44100,
+    isStereo: true,
+  },
+  zoomRatio: 1.0,
+  enablePinchedZoom: false,
+  onConnectionSuccess: () => {},
+  onConnectionFailed: () => {},
+  onDisconnect: () => {},
+  onStartStreaming: () => {}
+};
+
+// native props
+type ReactNativeLivestreamNativeProps = {
+  style?: ViewStyle;
+  liveStreamKey: string;
+  rtmpServerUrl: string;
+  onConnectionSuccess: (event: NativeSyntheticEvent<{}>) => void;
+  onConnectionFailed: (event: NativeSyntheticEvent<{ code: string }>) => void;
+  onDisconnect: (event: NativeSyntheticEvent<{}>) => void;
+
+  // android 0.2.1
+  videoFps: number;
+  videoResolution: '240p' | '360p' | '480p' | '720p' | '1080p' | '2160p';
+  videoBitrate: number;
+  videoCamera: 'front' | 'back';
+  videoOrientation: 'landscape' | 'portrait';
+  audioMuted: boolean;
+  audioBitrate: number;
+
+  // ios 1.2.2
+  camera: "front" | "back";
   video: {
     fps: number;
     resolution: '240p' | '360p' | '480p' | '720p' | '1080p' | '2160p';
-    bitrate?: number;
-    camera?: 'front' | 'back';
-    orientation?: 'landscape' | 'portrait';
+    bitrate: number;
+    orientation: 'landscape' | 'portrait';
   };
-  audio?: {
-    muted?: boolean;
-    bitrate?: number;
-  };
-  onConnectionSuccess?: () => void;
-  onConnectionFailed?: (code: string) => void;
-  onDisconnect?: () => void;
-};
 
-type ReactNativeLivestreamNativeProps = {
-  style: ViewStyle;
-  liveStreamKey: string;
-  rtmpServerUrl?: string;
-  videoFps: number;
-  videoResolution: '240p' | '360p' | '480p' | '720p' | '1080p' | '2160p';
-  videoBitrate?: number;
-  videoCamera?: 'front' | 'back';
-  videoOrientation?: 'landscape' | 'portrait';
-  audioMuted?: boolean;
-  audioBitrate?: number;
-  onConnectionSuccess?: (event: NativeSyntheticEvent<{}>) => void;
-  onConnectionFailed?: (event: NativeSyntheticEvent<{ code: string }>) => void;
-  onDisconnect?: (event: NativeSyntheticEvent<{}>) => void;
-};
+  isMuted: boolean;
+  audio: {
+    bitrate: number;
+    sampleRate: number;
+    isStereo: boolean;
+  },
 
-export type ReactNativeLivestreamMethods = {
-  startStreaming: () => void;
-  stopStreaming: () => void;
-  enableAudio: () => void;
-  disableAudio: () => void;
+  zoomRatio: number;
+  enablePinchedZoom: boolean;
+
+  onStartStreaming: (event: NativeSyntheticEvent<{}>) => void;
 };
 
 export const ReactNativeLivestreamViewNative =
@@ -61,35 +116,23 @@ const LivestreamView = forwardRef<
   ReactNativeLivestreamMethods,
   ReactNativeLivestreamProps
 >(
-  (
-    {
-      style,
-      video,
-      rtmpServerUrl,
-      liveStreamKey,
-      audio,
-      onConnectionSuccess,
-      onConnectionFailed,
-      onDisconnect,
-    },
-    forwardedRef
-  ) => {
-    const onConnectionSuccessHandler = (event: NativeSyntheticEvent<{}>) => {
-      const {} = event.nativeEvent;
-      onConnectionSuccess?.();
-    };
+  (props: ReactNativeLivestreamProps, forwardedRef: any) => {
 
-    const onConnectionFailedHandler = (
-      event: NativeSyntheticEvent<{ code: string }>
-    ) => {
-      const { code } = event.nativeEvent;
-      onConnectionFailed?.(code);
-    };
-
-    const onDisconnectHandler = (event: NativeSyntheticEvent<{}>) => {
-      const {} = event.nativeEvent;
-      onDisconnect?.();
-    };
+    const nativeProps = {
+      ...LIVE_STREAM_PROPS_DEFAULTS,
+      ...props,
+      video: {
+        ...LIVE_STREAM_PROPS_DEFAULTS.video,
+        ...props.video
+      },
+      audio: {
+        ...LIVE_STREAM_PROPS_DEFAULTS.audio,
+        ...props.audio
+      },
+      // 以下暂不支持
+      zoomRatio: 1.0,
+      enablePinchedZoom: false,
+    }
 
     const nativeRef = useRef<typeof ReactNativeLivestreamViewNative | null>(
       null
@@ -112,40 +155,49 @@ const LivestreamView = forwardRef<
           []
         );
       },
-      enableAudio: () => {
-        UIManager.dispatchViewManagerCommand(
-          findNodeHandle(nativeRef.current),
-          UIManager.getViewManagerConfig('ReactNativeLivestreamView').Commands
-            .enableAudioFromManager,
-          []
-        );
-      },
-      disableAudio: () => {
-        UIManager.dispatchViewManagerCommand(
-          findNodeHandle(nativeRef.current),
-          UIManager.getViewManagerConfig('ReactNativeLivestreamView').Commands
-            .disableAudioFromManager,
-          []
-        );
-      },
+      // 暂不支持
+      // setZoomRatio: (zoomRatio: number) => {
+      //   UIManager.dispatchViewManagerCommand(
+      //     findNodeHandle(nativeRef.current),
+      //     UIManager.getViewManagerConfig('ReactNativeLiveStreamView').Commands
+      //       .zoomRatioFromManager,
+      //     [zoomRatio]
+      //   );
+      // },
     }));
 
     return (
       <ReactNativeLivestreamViewNative
-        style={style}
-        videoCamera={video.camera}
-        videoResolution={video.resolution}
-        videoFps={video.fps}
-        videoBitrate={video.bitrate}
-        videoOrientation={video.orientation}
-        audioMuted={audio?.muted}
-        audioBitrate={audio?.bitrate}
-        liveStreamKey={liveStreamKey}
-        rtmpServerUrl={rtmpServerUrl}
         ref={nativeRef as any}
-        onConnectionSuccess={onConnectionSuccessHandler}
-        onConnectionFailed={onConnectionFailedHandler}
-        onDisconnect={onDisconnectHandler}
+        style={nativeProps.style}
+        liveStreamKey={nativeProps.liveStreamKey}
+        rtmpServerUrl={nativeProps.rtmpServerUrl}
+        onConnectionSuccess={nativeProps.onConnectionSuccess}
+        onConnectionFailed={nativeProps.onConnectionFailed}
+        onDisconnect={nativeProps.onDisconnect}
+
+        // android 0.2.1
+        videoCamera={nativeProps.camera}
+        videoResolution={nativeProps.video.resolution}
+        videoFps={nativeProps.video.fps}
+        videoBitrate={nativeProps.video.bitrate}
+        videoOrientation={nativeProps.video.orientation}
+
+        audioMuted={nativeProps.isMuted}
+        audioBitrate={nativeProps.audio.bitrate}
+
+        // ios 1.2.2
+        camera={nativeProps.camera}
+        video={nativeProps.video}
+
+        isMuted={nativeProps.isMuted}
+        audio={nativeProps.audio}
+
+        zoomRatio={nativeProps.zoomRatio}
+        enablePinchedZoom={nativeProps.enablePinchedZoom}
+
+        onStartStreaming={nativeProps.onStartStreaming} // 限ios
+
       />
     );
   }

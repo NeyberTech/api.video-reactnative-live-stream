@@ -1,167 +1,237 @@
 //
-//  ReactNativeLivestreamView.swift
-//  api-video-react-native-livestream
-//
-//  Created by Thibault Malbranche on 07/05/2021.
+//  ReactNativeLiveStreamView.swift
+//  api.video-reactnative-live-stream
 //
 
-import Foundation
-import LiveStreamIos_NT
+import ApiVideoLiveStream
 import AVFoundation
+import CoreGraphics
+import Foundation
 
-class ReactNativeLivestreamView : UIView {
-    private var apiVideo: ApiVideoLiveStream?
+extension String {
+    func toResolution() -> Resolution {
+        switch self {
+        case "240p":
+            return Resolution.RESOLUTION_240
+        case "360p":
+            return Resolution.RESOLUTION_360
+        case "480p":
+            return Resolution.RESOLUTION_480
+        case "720p":
+            return Resolution.RESOLUTION_720
+        case "1080p":
+            return Resolution.RESOLUTION_1080
+        default:
+            return Resolution.RESOLUTION_720
+        }
+    }
+
+    func toCaptureDevicePosition() -> AVCaptureDevice.Position {
+        switch self {
+        case "back":
+            return AVCaptureDevice.Position.back
+        case "front":
+            return AVCaptureDevice.Position.front
+        default:
+            return AVCaptureDevice.Position.back
+        }
+    }
+}
+
+extension AVCaptureDevice.Position {
+    func toCameraPositionName() -> String {
+        switch self {
+        case AVCaptureDevice.Position.back:
+            return "back"
+        case AVCaptureDevice.Position.front:
+            return "front"
+        default:
+            return "back"
+        }
+    }
+}
+
+class ReactNativeLiveStreamView: UIView {
+    private var liveStream: ApiVideoLiveStream!
+    private var isStreaming: Bool = false
+
+    private lazy var zoomGesture: UIPinchGestureRecognizer = .init(target: self, action: #selector(zoom(sender:)))
+    private let pinchZoomMultiplier: CGFloat = 2.2
 
     override init(frame: CGRect) {
         super.init(frame: frame)
-        apiVideo = ApiVideoLiveStream(view: self)
+
+        do {
+            liveStream = try ApiVideoLiveStream(initialAudioConfig: nil, initialVideoConfig: nil, preview: self)
+        } catch {
+            fatalError("build(): Can't create a live stream instance")
+        }
+
+        liveStream.onConnectionSuccess = { () in
+            self.onConnectionSuccess?([:])
+        }
+        liveStream.onDisconnect = { () in
+            self.isStreaming = false
+            self.onDisconnect?([:])
+        }
+        liveStream.onConnectionFailed = { code in
+            self.isStreaming = false
+            self.onConnectionFailed?([
+                "code": code,
+            ])
+        }
+
+        addGestureRecognizer(zoomGesture)
     }
 
-    required init?(coder: NSCoder) {
+    @available(*, unavailable)
+    required init?(coder _: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
 
-    private func getResolutionFromString(resolutionString: String) -> ApiVideoLiveStream.Resolutions{
-        switch resolutionString {
-        case "240p":
-            return ApiVideoLiveStream.Resolutions.RESOLUTION_240
-        case "360p":
-            return ApiVideoLiveStream.Resolutions.RESOLUTION_360
-        case "480p":
-            return ApiVideoLiveStream.Resolutions.RESOLUTION_480
-        case "720p":
-            return ApiVideoLiveStream.Resolutions.RESOLUTION_720
-        case "1080p":
-            return ApiVideoLiveStream.Resolutions.RESOLUTION_1080
-        case "2160p":
-            return ApiVideoLiveStream.Resolutions.RESOLUTION_2160
-        default:
-            return ApiVideoLiveStream.Resolutions.RESOLUTION_720
+    private var videoBitrate: Int {
+        get {
+            return liveStream.videoBitrate
+        }
+        set {
+            liveStream.videoBitrate = newValue
         }
     }
 
-    
-    @objc var onConnectionSuccess: RCTDirectEventBlock? = nil {
+    private var audioConfig: AudioConfig {
+        get {
+            liveStream.audioConfig
+        }
+        set {
+            liveStream.audioConfig = newValue
+        }
+    }
+
+    private var videoConfig: VideoConfig {
+        get {
+            liveStream.videoConfig
+        }
+        set {
+            liveStream.videoConfig = newValue
+        }
+    }
+
+    @objc var audio: NSDictionary = [:] {
         didSet {
-            apiVideo?.onConnectionSuccess = {() in
-                self.onConnectionSuccess?([:])
+            audioConfig = AudioConfig(bitrate: audio["bitrate"] as! Int)
+        }
+    }
+
+    @objc var video: NSDictionary = [:] {
+        didSet {
+            if isStreaming {
+                videoBitrate = video["bitrate"] as! Int
+            } else {
+                videoConfig = VideoConfig(bitrate: video["bitrate"] as! Int,
+                                          resolution: (video["resolution"] as! String).toResolution(),
+                                          fps: video["fps"] as! Int)
             }
         }
     }
-    
-    @objc var onConnectionFailed: RCTDirectEventBlock? = nil {
-        didSet {
-            apiVideo?.onConnectionFailed = {(code) in
-                self.onConnectionFailed?([
-                    "code": code
-                ])
+
+    @objc var camera: String {
+        get {
+            return liveStream.camera.toCameraPositionName()
+        }
+        set {
+            let value = newValue.toCaptureDevicePosition()
+            if value == liveStream.camera {
+                return
             }
+            liveStream.camera = value
         }
     }
-    
-    @objc var onDisconnect: RCTDirectEventBlock? = nil {
-        didSet {
-            apiVideo?.onDisconnect = {() in
-                self.onDisconnect?([:])
+
+    @objc var isMuted: Bool {
+        get {
+            return liveStream.isMuted
+        }
+        set {
+            if newValue == liveStream.isMuted {
+                return
             }
+            liveStream.isMuted = newValue
         }
     }
 
-    @objc override func didMoveToWindow() {
-        super.didMoveToWindow()
-    }
-
-    @objc var liveStreamKey: String = "" {
-      didSet {
-      }
-    }
-
-    @objc var rtmpServerUrl: String? {
-      didSet {
-      }
-    }
-
-    @objc var videoFps: Double = 30 {
-      didSet {
-        if(videoFps == Double(apiVideo!.videoFps)){
-            return
+    @objc var zoomRatio: Double {
+        get {
+            return Double(liveStream.zoomRatio)
         }
-        apiVideo?.videoFps = videoFps
-      }
-    }
-
-    @objc var videoResolution: String = "720p" {
-      didSet {
-        let newResolution = getResolutionFromString(resolutionString: videoResolution)
-        if(newResolution == apiVideo!.videoResolution){
-            return
+        set {
+            liveStream.zoomRatio = CGFloat(newValue)
         }
-        apiVideo?.videoResolution = newResolution
-      }
     }
 
-    @objc var videoBitrate: Double = -1  {
-      didSet {
-      }
-    }
-
-    @objc var videoCamera: String = "back" {
-      didSet {
-        var value : AVCaptureDevice.Position
-        switch videoCamera {
-        case "back":
-            value = AVCaptureDevice.Position.back
-        case "front":
-            value = AVCaptureDevice.Position.front
-        default:
-            value = AVCaptureDevice.Position.back
+    @objc var enablePinchedZoom: Bool {
+        get {
+            return zoomGesture.isEnabled
         }
-        if(value == apiVideo?.videoCamera){
-            return
+        set {
+            zoomGesture.isEnabled = newValue
         }
-        apiVideo?.videoCamera = value
-
-      }
     }
 
-    @objc var videoOrientation: String = "landscape" {
-      didSet {
-        var value : ApiVideoLiveStream.Orientation
-        switch videoOrientation {
-        case "landscape":
-            value = ApiVideoLiveStream.Orientation.landscape
-        case "portrait":
-            value = ApiVideoLiveStream.Orientation.portrait
-        default:
-            value = ApiVideoLiveStream.Orientation.landscape
+    @objc func startStreaming(requestId: Int, streamKey: String, url: String? = nil) {
+        do {
+            if let url = url {
+                try liveStream.startStreaming(streamKey: streamKey, url: url)
+            } else {
+                try liveStream.startStreaming(streamKey: streamKey)
+            }
+            isStreaming = true
+            onStartStreaming?([
+                "requestId": requestId,
+                "result": true,
+            ])
+        } catch let LiveStreamError.IllegalArgumentError(message) {
+            self.onStartStreaming?([
+                "requestId": requestId,
+                "result": false,
+                "error": message,
+            ])
+        } catch {
+            onStartStreaming?([
+                "requestId": requestId,
+                "result": false,
+                "error": "Unknown error",
+            ])
         }
-        if(value == apiVideo?.videoOrientation){
-            return
-        }
-        apiVideo?.videoOrientation = value
-
-      }
-    }
-
-    @objc var audioMuted: Bool = false {
-      didSet {
-        if(audioMuted == apiVideo!.audioMuted){
-            return
-        }
-        apiVideo?.audioMuted = audioMuted
-      }
-    }
-
-    @objc var audioBitrate: Double = -1 {
-      didSet {
-      }
-    }
-
-    @objc func startStreaming() {
-        apiVideo!.startLiveStreamFlux(liveStreamKey: self.liveStreamKey, rtmpServerUrl: self.rtmpServerUrl)
     }
 
     @objc func stopStreaming() {
-        apiVideo!.stopLiveStreamFlux()
+        isStreaming = false
+        liveStream.stopStreaming()
+    }
+
+    @objc func setZoomRatio(zoomRatio: CGFloat) {
+        if let liveStream = liveStream {
+            liveStream.zoomRatio = zoomRatio
+        }
+    }
+
+    @objc
+    private func zoom(sender: UIPinchGestureRecognizer) {
+        if sender.state == .changed {
+            liveStream.zoomRatio = liveStream.zoomRatio + (sender.scale - 1) * pinchZoomMultiplier
+            sender.scale = 1
+        }
+    }
+
+    @objc var onStartStreaming: RCTDirectEventBlock?
+
+    @objc var onConnectionSuccess: RCTDirectEventBlock?
+
+    @objc var onConnectionFailed: RCTDirectEventBlock?
+
+    @objc var onDisconnect: RCTDirectEventBlock?
+
+    @objc override func didMoveToWindow() {
+        super.didMoveToWindow()
     }
 }
