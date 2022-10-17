@@ -21,8 +21,8 @@ export type ReactNativeLivestreamProps = {
     fps: number;
     resolution: Resolution;
     bitrate: number;
-    orientation: Orientation; // 废弃
   };
+  orientation: Orientation; // 废弃
   isMuted: boolean;
   audio: {
     bitrate: number;

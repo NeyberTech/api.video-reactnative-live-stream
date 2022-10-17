@@ -5,30 +5,12 @@ import {
 } from 'react-native';
 import type { ReactNativeLivestreamProps, ReactNativeLivestreamMethods } from './types';
 import { NativeLivestreamView } from './nativeComponent';
-import { LIVESTREAM_PROPS_DEFAULTS } from "./config"
-
 
 const LivestreamView = forwardRef<
   ReactNativeLivestreamMethods,
   ReactNativeLivestreamProps
 >(
   (props: ReactNativeLivestreamProps, ref: any) => {
-
-    const nativeProps: ReactNativeLivestreamProps = {
-      ...LIVESTREAM_PROPS_DEFAULTS,
-      ...props,
-      video: {
-        ...LIVESTREAM_PROPS_DEFAULTS.video,
-        ...props.video
-      },
-      audio: {
-        ...LIVESTREAM_PROPS_DEFAULTS.audio,
-        ...props.audio
-      },
-      // 以下暂不支持
-      zoomRatio: 1.0,
-      enablePinchedZoom: false,
-    }
 
     const nativeRef = useRef<typeof NativeLivestreamView | null>(null);
 
@@ -80,34 +62,34 @@ const LivestreamView = forwardRef<
     return (
       <NativeLivestreamView
         ref={nativeRef as any}
-        style={nativeProps.style}
-        liveStreamKey={nativeProps.liveStreamKey}
-        rtmpServerUrl={nativeProps.rtmpServerUrl}
-        onConnectionSuccess={nativeProps.onConnectionSuccess}
-        onConnectionFailed={nativeProps.onConnectionFailed}
-        onDisconnect={nativeProps.onDisconnect}
+        style={props.style}
+        liveStreamKey={props.liveStreamKey}
+        rtmpServerUrl={props.rtmpServerUrl}
+        onConnectionSuccess={props.onConnectionSuccess}
+        onConnectionFailed={props.onConnectionFailed}
+        onDisconnect={props.onDisconnect}
 
         // android 0.2.1
-        videoCamera={nativeProps.camera}
-        videoResolution={nativeProps.video.resolution}
-        videoFps={nativeProps.video.fps}
-        videoBitrate={nativeProps.video.bitrate}
-        videoOrientation={nativeProps.video.orientation}
+        videoCamera={props.camera}
+        videoResolution={props.video.resolution}
+        videoFps={props.video.fps}
+        videoBitrate={props.video.bitrate}
+        videoOrientation={props.orientation}
 
-        audioMuted={nativeProps.isMuted}
-        audioBitrate={nativeProps.audio.bitrate}
+        audioMuted={props.isMuted}
+        audioBitrate={props.audio.bitrate}
 
         // ios 1.2.2
-        camera={nativeProps.camera}
-        video={nativeProps.video}
+        camera={props.camera}
+        video={props.video}
 
-        isMuted={nativeProps.isMuted}
-        audio={nativeProps.audio}
+        isMuted={props.isMuted}
+        audio={props.audio}
 
-        zoomRatio={nativeProps.zoomRatio}
-        enablePinchedZoom={nativeProps.enablePinchedZoom}
+        zoomRatio={props.zoomRatio}
+        enablePinchedZoom={props.enablePinchedZoom}
 
-        onStartStreaming={nativeProps.onStartStreaming} // 限ios
+        onStartStreaming={props.onStartStreaming} // 限ios
 
       />
     );
